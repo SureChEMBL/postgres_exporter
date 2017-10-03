@@ -1,0 +1,49 @@
+#!/bin/bash
+
+set -e -u
+
+# Copy source directory to temporary location.
+mkdir -p "$AUTOPKGTEST_TMP"
+cp -ra . "$AUTOPKGTEST_TMP"
+cd "$AUTOPKGTEST_TMP"
+
+# Obtain the package import path safely.
+cat >> debian/rules <<'END'
+apt_print_pkg:
+	@echo "$(DH_GOPKG)"
+END
+APT_PKG=$(debian/rules apt_print_pkg)
+
+if [ -z "$APT_PKG" ]; then
+    # DH_GOPKG not set, find it in control file.
+    APT_PKG=$(perl -w -MDpkg::Control::Info -e 'print \
+        Dpkg::Control::Info->new()->get_source()->{"XS-Go-Import-Path"};')
+fi
+
+echo "Testing $APT_PKG..."
+
+if [ -e "/usr/share/gocode/src/$APT_PKG" ]; then
+    # Source code installed.
+    # Disable any dh_auto_configure overrides.
+    sed -i 's/^override_dh_auto_configure:/_&/' debian/rules
+    # Add our own override to use them instead of the source directory.
+    # Copy instead of symlink as go list can't deal with the former.
+    cat >> debian/rules <<'END'
+APT_BDIR := $(shell perl -w -MDebian::Debhelper::Buildsystem::golang -e \
+	'print Debian::Debhelper::Buildsystem::golang->new()->get_builddir()')
+override_dh_auto_configure:
+	mkdir -p "${APT_BDIR}"
+	cp -a /usr/share/gocode/src "${APT_BDIR}"
+END
+fi
+
+# Re-build the package. Save stderr in case of error, but don't show it
+# otherwise, as go build outputs progress there.
+ret=0
+debian/rules build 2> build.stderr || ret=$?
+
+if [ $ret -ne 0 ]; then
+    echo "'debian/rules build' failed with exit code $ret." >&2
+    echo "Standard error:"
+    cat build.stderr
+fi

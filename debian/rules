@@ -1,0 +1,17 @@
+#!/usr/bin/make -f
+
+#export DH_VERBOSE=1
+export DH_GOPKG := github.com/wrouesnel/postgres_exporter
+
+BUILDDIR := build
+
+DEBVERS    ?= $(shell dpkg-parsechangelog | sed -n -e 's/^Version: //p')
+VERSION    ?= $(shell echo '$(DEBVERS)' | sed 's/^[[:digit:]]*://; s/[-].*//')
+DEBPKGNAME ?= $(shell dpkg-parsechangelog | sed -n -e 's/^Source: //p')
+
+%:
+	dh $@ --buildsystem=golang --with=golang --builddir=$(BUILDDIR)
+
+override_dh_auto_install:
+	cp -v $(BUILDDIR)/bin/postgres_exporter \
+            debian/$(DEBPKGNAME)/usr/bin/$(DEBPKGNAME)

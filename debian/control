@@ -1,0 +1,25 @@
+Source: prometheus-postgres-exporter
+Section: net
+Priority: extra
+Maintainer: Debian Go Packaging Team <pkg-go-maintainers@lists.alioth.debian.org>
+Uploaders: Martín Ferrari <tincho@debian.org>
+Build-Depends: debhelper (>= 9.0.0), dh-golang (>= 0.17~), golang-any,
+               golang-github-blang-semver-dev,
+               golang-github-lib-pq-dev,
+               golang-github-prometheus-client-golang-dev,
+               golang-github-prometheus-common-dev,
+               golang-gopkg-check.v1-dev,
+               golang-gopkg-yaml.v2-dev,
+Standards-Version: 3.9.8
+Vcs-Git: https://anonscm.debian.org/git/pkg-go/packages/prometheus-postgres-exporter.git
+Vcs-Browser: https://anonscm.debian.org/cgit/pkg-go/packages/prometheus-postgres-exporter.git
+Homepage: https://github.com/wrouesnel/postgres_exporter/
+Testsuite: autopkgtest
+
+Package: prometheus-postgres-exporter
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, daemon
+Built-Using: ${misc:Built-Using}
+Description: Prometheus exporter for PostgreSQL server metrics
+ Prometheus exporter for PostgreSQL server metrics, written in Go.
+ Supportes Postgres versions 9.1 and up.
